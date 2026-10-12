@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Assolement EARL BIZET</title>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<style>
+  :root{
+    --ink:#1c2521; --paper:#f6f4ee; --line:#d8d3c4; --line-strong:#a9a290;
+    --accent:#3d5a3c; --accent-2:#8a6a3c;
+    --c-ble:#3f8fc4; --c-orgeh:#a9822e; --c-orgep:#e6cf4a; --c-mais:#f0a72c;
+    --c-pdt:#c96a2e; --c-betterave:#c0392b; --c-colza:#e9d400; --c-feverole:#6a3d9a;
+    --c-pois:#7cb342; --c-luzerne:#2e6b2e; --c-avoine:#a98a63; --c-jachere:#9a9488;
+    --c-prairie:#5c9c6a; --c-autres:#b8b3a5; --c-vide:#e4e0d3;
+    font-family: 'Segoe UI', Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  [hidden]{display:none!important;}
+  body{margin:0; background:var(--paper); color:var(--ink);}
+  header{padding:22px 28px 14px; border-bottom:2px solid var(--ink);}
+  header h1{margin:0 0 4px; font-size:22px;}
+  header p{margin:2px 0; font-size:13px; color:#54544a; max-width:900px;}
+  .toolbar{display:flex; gap:10px; flex-wrap:wrap; padding:12px 28px; align-items:center; border-bottom:1px solid var(--line);}
+  button{font-family:inherit; font-size:12.5px; padding:7px 13px; border-radius:5px; border:1px solid var(--line-strong); background:#fff; cursor:pointer; color:var(--ink);}
+  button:hover{background:#eee9db;}
+  button.primary{background:var(--accent); color:#fff; border-color:var(--accent);}
+  button.primary:hover{background:#2f472e;}
+  .legend{display:flex; gap:8px; flex-wrap:wrap; padding:10px 28px; font-size:11.5px; border-bottom:1px solid var(--line); background:#fbfaf5;}
+  .swatch{display:inline-flex; align-items:center; gap:5px; padding:2px 8px 2px 2px; border-radius:4px; background:#fff; border:1px solid var(--line);}
+  .swatch i{width:12px; height:12px; border-radius:3px; display:inline-block;}
+  .wrap{overflow-x:auto; padding:0 0 40px;}
+  table{border-collapse:collapse; width:100%; font-size:12px;}
+  thead th{position:sticky; top:0; background:var(--ink); color:#fff; padding:7px 6px; font-weight:600; white-space:nowrap; z-index:3; border-right:1px solid #333;}
+  thead th.future{background:#4a4438;}
+  tbody td{border:1px solid var(--line); padding:0; text-align:center; white-space:nowrap;}
+  td.name-col, td.surf-col, td.ilot-col{background:#fff; position:sticky; z-index:2; text-align:left; padding:4px 8px;}
+  td.ilot-col{left:0; width:38px; text-align:center; color:#888; font-size:10.5px;}
+  td.name-col{left:38px; min-width:200px; font-weight:500;}
+  td.surf-col{left:238px; width:70px; text-align:right; border-right:2px solid var(--line-strong);}
+  thead th.ilot-col{left:0; z-index:4;} thead th.name-col{left:38px; z-index:4;} thead th.surf-col{left:238px; z-index:4; border-right:2px solid #333;}
+  input.name-input{border:none; background:transparent; width:100%; font-size:12px; font-weight:500; font-family:inherit; padding:2px;}
+  input.surf-input{border:none; background:transparent; width:100%; text-align:right; font-size:12px; font-family:inherit; padding:2px;}
+  input.name-input:focus, input.surf-input:focus{background:#fff9e0; outline:1px solid var(--accent-2);}
+  .cell-crop{position:relative; width:100%; height:100%; padding:5px 4px; cursor:pointer; color:#fff; font-size:11px; font-weight:600; text-shadow:0 1px 1px rgba(0,0,0,.35); min-width:76px;}
+  .cell-crop select{position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none;}
+  td.future{background-image:repeating-linear-gradient(135deg, rgba(0,0,0,0.05) 0 6px, transparent 6px 12px);}
+  .rowbtns{display:flex; gap:3px; padding:2px 4px;}
+  .rowbtns button{padding:2px 6px; font-size:11px;}
+  tfoot td{background:#efece2; font-weight:700; border-top:2px solid var(--ink); padding:6px 6px; text-align:center;}
+  tfoot td.name-col{text-align:left; background:#efece2;}
+  .recap-total td{font-weight:700; border-top:2px solid var(--line-strong); background:#efece2;}
+  /* Connexion */
+  #login{position:fixed; inset:0; background:var(--paper); display:flex; align-items:center; justify-content:center; z-index:50; padding:16px;}
+  #login form{background:#fff; border:1px solid var(--line); border-radius:10px; padding:24px; width:100%; max-width:340px; display:grid; gap:12px;}
+  #login h2{margin:0; font-size:18px;}
+  #login label{display:grid; gap:4px; font-size:12.5px; color:#54544a;}
+  #login input{font:inherit; font-size:15px; padding:9px 10px; border:1px solid var(--line-strong); border-radius:6px;}
+  #login .err{color:#b3261e; font-size:12.5px; min-height:1em; margin:0;}
+  #login button{font-size:14px; padding:10px;}
+  .cloud{font-size:12px; padding:3px 9px; border-radius:999px; border:1px solid var(--line); background:#fff;}
+  .cloud.ok{color:#2c6b34; border-color:#9cc3a0;} .cloud.wait{color:#8a6a3c;} .cloud.err{color:#b3261e; border-color:#e3a19b;}
+  .empty-msg{padding:24px 28px; font-size:14px; color:#54544a;}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <form id="loginForm" autocomplete="on">
+    <h2>🌾 Assolement EARL BIZET</h2>
+    <label>E-mail<input id="lgMail" type="email" autocomplete="username" required></label>
+    <label>Mot de passe<input id="lgPass" type="password" autocomplete="current-password" required></label>
+    <p class="err" id="lgErr"></p>
+    <button class="primary" type="submit" id="lgBtn">Se connecter</button>
+  </form>
+</div>
+
+<header>
+  <h1>🌾 Assolement EARL BIZET</h1>
+  <p>Historique 2018–2025 repris de vos éditions SMAG Farmer. Colonnes futures (fond hachuré) : cliquez sur une case pour choisir la culture. Le récapitulatif en bas recalcule les hectares par culture et par année.</p>
+  <p>☁️ Chaque modification est enregistrée en ligne automatiquement et apparaît en direct sur tous vos appareils connectés.</p>
+</header>
+
+<div class="toolbar">
+  <button class="primary" onclick="addRow()">+ Ajouter une ligne / sous-parcelle</button>
+  <button onclick="addYearColumn()">+ Ajouter une année</button>
+  <button onclick="removeYearColumn()">- Retirer la dernière année</button>
+  <span style="width:1px;height:22px;background:var(--line-strong);"></span>
+  <span class="cloud wait" id="cloud">Connexion…</span>
+  <span style="width:1px;height:22px;background:var(--line-strong);"></span>
+  <button onclick="saveState()">💾 Copie de sauvegarde (fichier)</button>
+  <button onclick="document.getElementById('loadFile').click()">📂 Importer une sauvegarde</button>
+  <input type="file" id="loadFile" accept=".json" style="display:none;" onchange="loadState(this.files[0])">
+  <span id="saveStatus" style="font-size:11px;color:#5c7a52;"></span>
+  <button onclick="exportCSV()">⬇ Exporter en CSV</button>
+  <button onclick="logout()">Se déconnecter</button>
+</div>
+<div class="empty-msg" id="emptyMsg" hidden>Aucune donnée en ligne pour l'instant. Cliquez sur <strong>📂 Importer une sauvegarde</strong> et choisissez votre fichier <code>assolement_earl_bizet_save.json</code> : il sera envoyé en ligne une fois pour toutes.</div>
+
+<div class="legend" id="legend"></div>
+
+<div class="wrap">
+<table id="tbl">
+  <thead><tr id="headerRow"></tr></thead>
+  <tbody id="tbody"></tbody>
+  <tfoot><tr id="totalsRow"></tr></tfoot>
+</table>
+</div>
+
+<h2 style="padding:20px 28px 0; margin:0; font-size:17px; border-top:2px solid var(--ink); padding-top:18px;">📊 Récapitulatif — Surface (ha) par culture et par année</h2>
+<p style="padding:0 28px; margin:6px 0 12px; font-size:12.5px; color:#54544a;">Se met à jour automatiquement à chaque modification du tableau ci-dessus.</p>
+<div class="wrap">
+<table id="recapTbl">
+  <thead><tr id="recapHeader"></tr></thead>
+  <tbody id="recapBody"></tbody>
+  <tfoot><tr id="recapTotal" class="recap-total"></tr></tfoot>
+</table>
+</div>
+
+<footer style="padding:14px 28px; font-size:11px; color:#8a8a80;">Historique reconstitué à partir des éditions Assolement SMAG Farmer 2018–2025 (EARL BIZET).</footer>
+
+<script>
+const YEARS_HIST = [2018,2019,2020,2021,2022,2023,2024,2025];
+let YEARS_FUT  = [2026,2027,2028,2029,2030];
+let YEARS_ALL  = YEARS_HIST.concat(YEARS_FUT);
+
+const CROPS = {
+  "":{c:"var(--c-vide)", label:"— à définir —"},
+  "Blé":{c:"var(--c-ble)", label:"Blé tendre hiver"},
+  "Orge hiver":{c:"var(--c-orgeh)", label:"Orge hiver"},
+  "Orge printemps":{c:"var(--c-orgep)", label:"Orge printemps"},
+  "Maïs":{c:"var(--c-mais)", label:"Maïs (grain/fourrage)"},
+  "PDT":{c:"var(--c-pdt)", label:"Pomme de terre"},
+  "Betterave":{c:"var(--c-betterave)", label:"Betterave (sucrière/fourragère)"},
+  "Colza":{c:"var(--c-colza)", label:"Colza"},
+  "Féverole":{c:"var(--c-feverole)", label:"Féverole printemps"},
+  "Pois":{c:"var(--c-pois)", label:"Pois (protéag./potager)"},
+  "Luzerne":{c:"var(--c-luzerne)", label:"Luzerne"},
+  "Avoine":{c:"var(--c-avoine)", label:"Avoine"},
+  "Jachère":{c:"var(--c-jachere)", label:"Jachère"},
+  "Prairie":{c:"var(--c-prairie)", label:"Prairie permanente"},
+  "Autres":{c:"var(--c-autres)", label:"Autres utilisations"}
+};
+
+// Les parcelles ne sont plus écrites dans la page (page publique) : elles viennent de Firebase après connexion.
+let ROWS = [];
+
+function fullSeq(row){ return row.hist.concat(row.future); }
+
+function buildLegend(){
+  document.getElementById("legend").innerHTML = Object.entries(CROPS)
+    .filter(([k])=>k!=="")
+    .map(([k,v])=>`<span class="swatch"><i style="background:${v.c}"></i>${v.label}</span>`).join("");
+}
+
+function buildHeader(){
+  let html = `<th class="ilot-col">Îlot</th><th class="name-col">Parcelle</th><th class="surf-col">Surface (ha)</th>`;
+  YEARS_HIST.forEach(y=> html += `<th>${y}</th>`);
+  YEARS_FUT.forEach(y=> html += `<th class="future">${y}</th>`);
+  html += `<th></th>`;
+  document.getElementById("headerRow").innerHTML = html;
+}
+
+function renderTable(){
+  const tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+  ROWS.forEach(row=>{
+    const seq = fullSeq(row);
+    const tr = document.createElement("tr");
+    tr.dataset.id = row.id;
+    tr.innerHTML = `
+      <td class="ilot-col">${row.ilot}</td>
+      <td class="name-col"><input class="name-input" value="${row.name}" onchange="updateName('${row.id}', this.value)"></td>
+      <td class="surf-col"><input class="surf-input" type="number" step="0.01" value="${row.surface}" onchange="updateSurface('${row.id}', this.value)"></td>
+    `;
+    YEARS_ALL.forEach((y, idx)=>{
+      const crop = seq[idx];
+      const isFuture = idx >= YEARS_HIST.length;
+      const td = document.createElement("td");
+      if(isFuture) td.classList.add("future");
+      const bg = crop && CROPS[crop] ? CROPS[crop].c : "var(--c-vide)";
+      td.innerHTML = `
+        <div class="cell-crop" style="background:${bg}; ${!crop?'color:#8a8a80;text-shadow:none;':''}">
+          ${crop || "—"}
+          <select onchange="updateCrop('${row.id}', ${idx}, this.value)">
+            ${Object.keys(CROPS).map(c=>`<option value="${c}" ${c===crop?'selected':''}>${CROPS[c].label}</option>`).join("")}
+          </select>
+        </div>`;
+      tr.appendChild(td);
+    });
+    const tdActions = document.createElement("td");
+    tdActions.innerHTML = `<div class="rowbtns">
+        <button title="Dupliquer cette ligne (ex: split PDT/betterave)" onclick="dupRow('${row.id}')">⎘</button>
+        <button title="Supprimer cette ligne" onclick="delRow('${row.id}')">🗑</button>
+      </div>`;
+    tr.appendChild(tdActions);
+    tbody.appendChild(tr);
+  });
+  renderTotals();
+}
+
+function renderTotals(){
+  const total = ROWS.reduce((s,r)=> s + parseFloat(r.surface||0), 0);
+  let html = `<td class="name-col">Total exploitation</td><td></td>`;
+  YEARS_ALL.forEach(()=> html += `<td>${total.toFixed(2)} ha</td>`);
+  html += `<td></td>`;
+  document.getElementById("totalsRow").innerHTML = html;
+  renderRecap();
+  document.getElementById("emptyMsg").hidden = !loaded || ROWS.length > 0;
+  scheduleSave();
+}
+
+function renderRecap(){
+  const sums = {};
+  Object.keys(CROPS).forEach(c=> sums[c] = YEARS_ALL.map(()=>0));
+  ROWS.forEach(row=>{
+    const seq = fullSeq(row);
+    const surf = parseFloat(row.surface||0);
+    seq.forEach((crop, idx)=>{ sums[crop][idx] += surf; });
+  });
+
+  document.getElementById("recapHeader").innerHTML = `<th class="name-col" style="left:0;">Culture</th>` +
+    YEARS_HIST.map(y=>`<th>${y}</th>`).join("") + YEARS_FUT.map(y=>`<th class="future">${y}</th>`).join("");
+
+  const body = document.getElementById("recapBody");
+  body.innerHTML = "";
+  Object.keys(CROPS).forEach(crop=>{
+    const total = sums[crop].reduce((a,b)=>a+b,0);
+    if(total <= 0) return;
+    const tr = document.createElement("tr");
+    let cells = `<td class="name-col" style="left:0;"><span class="swatch"><i style="background:${CROPS[crop].c}"></i>${CROPS[crop].label}</span></td>`;
+    sums[crop].forEach((v, idx)=>{
+      const isFuture = idx >= YEARS_HIST.length;
+      cells += `<td${isFuture?' class="future"':''}>${v>0 ? v.toFixed(2)+' ha' : '—'}</td>`;
+    });
+    tr.innerHTML = cells;
+    body.appendChild(tr);
+  });
+
+  let totCells = `<td class="name-col">Total assolé</td>`;
+  YEARS_ALL.forEach((y, idx)=>{
+    let s = 0;
+    Object.keys(sums).forEach(c=> s += sums[c][idx]);
+    totCells += `<td>${s.toFixed(2)} ha</td>`;
+  });
+  document.getElementById("recapTotal").innerHTML = totCells;
+}
+
+function addYearColumn(){
+  const nextYear = YEARS_FUT[YEARS_FUT.length-1] + 1;
+  YEARS_FUT.push(nextYear);
+  YEARS_ALL = YEARS_HIST.concat(YEARS_FUT);
+  ROWS.forEach(r=> r.future.push(""));
+  buildHeader();
+  renderTable();
+}
+function removeYearColumn(){
+  if(YEARS_FUT.length <= 1){ alert("Il doit rester au moins une année future."); return; }
+  const lastYear = YEARS_FUT[YEARS_FUT.length-1];
+  if(!confirm("Retirer l'année "+lastYear+" du tableau (les cultures saisies dessus seront perdues) ?")) return;
+  YEARS_FUT.pop();
+  YEARS_ALL = YEARS_HIST.concat(YEARS_FUT);
+  ROWS.forEach(r=> r.future.pop());
+  buildHeader();
+  renderTable();
+}
+function syncYearsToData(rows){
+  const maxFut = Math.max(YEARS_FUT.length, ...rows.map(r=>(r.future||[]).length));
+  while(YEARS_FUT.length < maxFut){ YEARS_FUT.push(YEARS_FUT[YEARS_FUT.length-1]+1); }
+  YEARS_ALL = YEARS_HIST.concat(YEARS_FUT);
+  rows.forEach(r=>{
+    r.future = r.future || [];
+    while(r.future.length < YEARS_FUT.length) r.future.push("");
+  });
+  buildHeader();
+}
+
+function updateName(id, val){ const r=ROWS.find(r=>r.id===id); r.name=val; scheduleSave(); }
+function updateSurface(id, val){ const r=ROWS.find(r=>r.id===id); r.surface=parseFloat(val)||0; renderTotals(); }
+function updateCrop(id, idx, val){
+  const r = ROWS.find(r=>r.id===id);
+  if(idx < YEARS_HIST.length){ r.hist[idx] = val; }
+  else { r.future[idx - YEARS_HIST.length] = val; }
+  renderTable();
+}
+function addRow(){
+  ROWS.push({ilot:"?", id:"r"+Date.now(), name:"Nouvelle parcelle", surface:1.00,
+    hist:["Blé","Blé","Blé","Blé","Blé","Blé","Blé","Blé"], future:new Array(YEARS_FUT.length).fill("")});
+  renderTable();
+}
+function dupRow(id){
+  const r = ROWS.find(r=>r.id===id);
+  const copy = JSON.parse(JSON.stringify(r));
+  copy.id = "r"+Date.now();
+  copy.name = r.name + " (bis)";
+  const i = ROWS.findIndex(r=>r.id===id);
+  ROWS.splice(i+1,0,copy);
+  renderTable();
+}
+function delRow(id){
+  if(!confirm("Supprimer cette ligne ?")) return;
+  ROWS = ROWS.filter(r=>r.id!==id);
+  renderTable();
+}
+
+function exportCSV(){
+  let rows = [["Îlot","Parcelle","Surface(ha)"].concat(YEARS_ALL)];
+  ROWS.forEach(r=> rows.push([r.ilot, r.name, r.surface].concat(fullSeq(r))));
+  const csv = rows.map(r=>r.join(";")).join("\n");
+  const blob = new Blob([csv], {type:"text/csv;charset=utf-8;"});
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "assolement_earl_bizet.csv";
+  link.click();
+}
+
+function saveState(){
+  const payload = { savedAt: new Date().toISOString(), rows: ROWS };
+  const blob = new Blob([JSON.stringify(payload, null, 1)], {type:"application/json;charset=utf-8;"});
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  const stamp = new Date().toISOString().slice(0,16).replace(/[:T]/g,"-");
+  link.download = "assolement_earl_bizet_sauvegarde_"+stamp+".json";
+  link.click();
+  flashStatus("💾 Sauvegarde téléchargée — gardez ce fichier pour le recharger plus tard.");
+}
+function loadState(file){
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (e)=>{
+    try{
+      const payload = JSON.parse(e.target.result);
+      const rows = payload.rows || payload;
+      if(!Array.isArray(rows)) throw new Error("format inattendu");
+      syncYearsToData(rows);
+      ROWS = rows;
+      loaded = true;
+      renderTable();
+      saveNow();
+      flashStatus("📂 Sauvegarde importée et envoyée en ligne (du "+(payload.savedAt ? new Date(payload.savedAt).toLocaleString('fr-FR') : "?")+").");
+    }catch(err){ alert("Impossible de lire ce fichier de sauvegarde : "+err.message); }
+  };
+  reader.readAsText(file);
+}
+function flashStatus(msg){
+  const el = document.getElementById("saveStatus");
+  el.textContent = msg;
+  setTimeout(()=>{ if(el.textContent===msg) el.textContent=""; }, 6000);
+}
+// ================= FIREBASE : connexion + enregistrement en ligne =================
+const firebaseConfig = {
+  apiKey: "AIzaSyDOilyX1JmD_nuPkC6JE7QW_GhBcdKcM0I",
+  authDomain: "enrouleur-eda1f.firebaseapp.com",
+  databaseURL: "https://enrouleur-eda1f-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "enrouleur-eda1f",
+  storageBucket: "enrouleur-eda1f.firebasestorage.app",
+  messagingSenderId: "1028823014289",
+  appId: "1:1028823014289:web:68da82933d870698ff9830"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+const REF_STATE = db.ref("assolement/state");     // état courant
+const REF_BACKUP = db.ref("assolement/backups");  // une copie par jour (sécurité)
+const CLIENT_ID = Math.random().toString(36).slice(2);  // reconnaît nos propres écritures
+
+let loaded = false, applyingRemote = false, saveTimer = null, lastBackupDay = null;
+
+function setCloud(cls, txt){ const el=document.getElementById("cloud"); el.className="cloud "+cls; el.textContent=txt; }
+const hhmm = d => d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+
+function scheduleSave(){
+  if(!loaded || applyingRemote || !auth.currentUser) return;
+  setCloud("wait","Enregistrement…");
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveNow, 700);
+}
+async function saveNow(){
+  if(!auth.currentUser) return;
+  clearTimeout(saveTimer);
+  const json = JSON.stringify({yearsFut:YEARS_FUT, rows:ROWS});
+  const now = new Date();
+  try{
+    await REF_STATE.set({json, savedAt: now.toISOString(), by: auth.currentUser.email, client: CLIENT_ID});
+    const day = now.toISOString().slice(0,10);
+    if(day !== lastBackupDay){ lastBackupDay = day; await REF_BACKUP.child(day).set({json, savedAt: now.toISOString()}); }
+    setCloud("ok","☁️ Enregistré "+hhmm(now));
+  }catch(e){ setCloud("err","⚠️ Non enregistré : "+e.message); }
+}
+
+function applyState(v){
+  if(!v || !v.json){ ROWS = []; loaded = true; renderTable(); setCloud("wait","Aucune donnée en ligne"); return; }
+  const data = JSON.parse(v.json);
+  applyingRemote = true;
+  YEARS_FUT = [2026,2027,2028,2029,2030];
+  if(Array.isArray(data.yearsFut) && data.yearsFut.length) YEARS_FUT = data.yearsFut.slice();
+  syncYearsToData(data.rows || []);
+  ROWS = data.rows || [];
+  renderTable();
+  applyingRemote = false;
+  loaded = true;
+  const t = v.savedAt ? new Date(v.savedAt) : null;
+  setCloud("ok", "☁️ À jour" + (t ? " · modifié "+t.toLocaleDateString('fr-FR')+" "+hhmm(t) : "") + (v.by ? " par "+v.by : ""));
+}
+
+let listening = false;
+auth.onAuthStateChanged(user=>{
+  document.getElementById("login").hidden = !!user;
+  if(user && !listening){
+    listening = true;
+    setCloud("wait","Chargement…");
+    REF_STATE.on("value", snap=>{
+      const v = snap.val();
+      // Nos propres écritures reviennent aussi : on ne recharge pas le tableau pour rien
+      if(loaded && v && v.client === CLIENT_ID) return;
+      // Ne pas écraser une saisie en cours dans une case nom / surface
+      const a = document.activeElement;
+      if(loaded && a && a.tagName === "INPUT" && a.closest("#tbl")){ setTimeout(()=>applyState(v), 1500); return; }
+      applyState(v);
+    }, err=> setCloud("err","⚠️ Accès refusé : "+err.message));
+    db.ref(".info/connected").on("value", s=>{ if(s.val()===false && loaded) setCloud("err","Hors ligne : les modifications partiront au retour du réseau"); });
+  }
+  if(!user && listening){ REF_STATE.off(); listening = false; loaded = false; ROWS = []; renderTable(); }
+});
+
+document.getElementById("loginForm").addEventListener("submit", async e=>{
+  e.preventDefault();
+  const err = document.getElementById("lgErr"), btn = document.getElementById("lgBtn");
+  err.textContent = ""; btn.disabled = true; btn.textContent = "Connexion…";
+  try{ await auth.signInWithEmailAndPassword(document.getElementById("lgMail").value.trim(), document.getElementById("lgPass").value); }
+  catch(x){
+    const m = {"auth/invalid-credential":"E-mail ou mot de passe incorrect.","auth/wrong-password":"Mot de passe incorrect.","auth/user-not-found":"Compte inconnu.",
+      "auth/too-many-requests":"Trop d'essais : réessayez dans quelques minutes.","auth/network-request-failed":"Pas de connexion internet.",
+      "auth/unauthorized-domain":"Cette adresse de page n'est pas autorisée dans Firebase (Authentication → Paramètres → Domaines autorisés)."};
+    err.textContent = m[x.code] || x.message;
+  }
+  btn.disabled = false; btn.textContent = "Se connecter";
+});
+function logout(){ if(confirm("Se déconnecter ?")) auth.signOut(); }
+
+buildLegend();
+buildHeader();
+renderTable();
+</script>
+</body>
+</html>
